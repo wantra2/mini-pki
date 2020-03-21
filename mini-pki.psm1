@@ -14,10 +14,20 @@
   mini-pki create-ca
   
 #>
+
+function create-ca {
+  $directories = @("miniCA", "miniCA\private", "miniCA\public", "miniCA\cert", "miniCA\csr")
+  New-Item -ItemType "directory" -Path $directories -Force
+}
+
+$functions = @{
+  "create-ca" = (Get-Item "function:create-ca").ScriptBlock
+}
+
 function mini-pki {
-  param(
-    $action
-      )
+  param($action)
+
   Write-Output "Doing action $action"
+  $functions[$action].Invoke()
 }
 Export-ModuleMember -Function mini-pki
