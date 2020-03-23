@@ -15,9 +15,13 @@
   
 #>
 
+
 function create-ca {
   $directories = @("miniCA", "miniCA\private", "miniCA\public", "miniCA\cert", "miniCA\csr")
+  $files = @("miniCA\index.txt", "miniCA\openssl.cnf")
   New-Item -ItemType "directory" -Path $directories -Force
+  icacls "miniCA\private" /grant:r Administrateur:F /T
+  New-Item -ItemType "file" -Path $files -Force
 }
 
 $functions = @{
