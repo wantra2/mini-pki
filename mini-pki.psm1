@@ -14,14 +14,30 @@
   mini-pki create-ca
   
 #>
+$current_drive_letter = (get-location).Drive.Name
 
+$ca_root_dir = "/miniCA"
+$ca_private_dir = "$ca_root_dir/private"
+$ca_public_dir = "$ca_root_dir/public"
+$ca_cert_dir = "$ca_root_dir/cert"
+$ca_csr_dir = "$ca_root_dir/csr"
+
+$directories = @($ca_root_dir, $ca_private_dir, $ca_public_dir, $ca_cert_dir, $ca_csr_dir)
+
+$database = "$ca_root_dir/ca.db.index"
+$serial = "$ca_root_dir/ca.db.serial"
+$randfile = "$ca_root_dir/ca.db.rand"
+
+$files = @($database, $serial, $randfile)
 
 function create-ca {
-  $directories = @("miniCA", "miniCA\private", "miniCA\public", "miniCA\cert", "miniCA\csr")
-  $files = @("miniCA\index.txt", "miniCA\openssl.cnf")
+
   New-Item -ItemType "directory" -Path $directories -Force
-  icacls "miniCA\private" /grant:r Administrateur:F /T
   New-Item -ItemType "file" -Path $files -Force
+
+  openssl.exe genrsa -des3 -out "$ca_private_dir/ca_private_key.pem" 2048
+
+  icacls ($current_drive_letter + ":/$ca_private_dir") /grant:r Administrateur:F /T
 }
 
 $functions = @{
