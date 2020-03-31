@@ -1,1 +1,3 @@
-Put the folder in Powershell module path then open powershell and start typing mini-pki [args].
+Put the folder in Powershell module path.
+Set the env variable OPENSSL_CONF to the file openssl.cnf.
+Open powershell and type commands like mini-pki create-ca.

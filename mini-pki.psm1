@@ -24,19 +24,12 @@ $ca_csr_dir = "$ca_root_dir/csr"
 
 $directories = @($ca_root_dir, $ca_private_dir, $ca_public_dir, $ca_cert_dir, $ca_csr_dir)
 
-$database = "$ca_root_dir/ca.db.index"
-$serial = "$ca_root_dir/ca.db.serial"
-$randfile = "$ca_root_dir/ca.db.rand"
-
-$files = @($database, $serial, $randfile)
-
 function create-ca {
-
   New-Item -ItemType "directory" -Path $directories -Force
-  New-Item -ItemType "file" -Path $files -Force
 
-  openssl.exe genrsa -des3 -out "$ca_private_dir/ca_private_key.pem" 2048
-
+  openssl.exe genrsa -des3 -out "$ca_private_dir/caprivatekey.pem" 2048
+  openssl.exe req -x509 -new -nodes -key "$ca_private_dir/caprivatekey.pem" -sha256 -days 3000 -out "$ca_cert_dir/cacert.pem"
+ 
   icacls ($current_drive_letter + ":/$ca_private_dir") /grant:r Administrateur:F /T
 }
 
