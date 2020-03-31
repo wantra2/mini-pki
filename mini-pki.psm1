@@ -30,7 +30,7 @@ function create-ca {
   $subject = @("C=FR", "O=EPITA", "OU=SRS", "E=srs@epita.com", "CN=root")
   $subject_string = "/" + ($subject -join "/")
 
-  openssl req -new -outform "PEM" -sha256 -newkey rsa:2048 -subj $subject_string -keyout "$ca_private_dir/caprivatekey.pem" -out "$ca_cert_dir/cacert.pem" -extensions "v3_ca" -days 3000 -x509  
+  openssl req -new -outform "PEM" -sha256 -newkey rsa:2048 -subj $subject_string -keyout "$ca_private_dir/caprivatekey.pem" -out "$ca_cert_dir/cacert.pem" -extensions "v3_ca" -days 3000 -x509 -nodes  
 
   openssl rsa -in "$ca_private_dir/caprivatekey.pem" -pubout -out "$ca_public_dir/capublickey.pem"
   icacls ($current_drive_letter + ":/$ca_private_dir") /grant:r Administrateur:F /T
