@@ -133,6 +133,20 @@ function user_sign {
 }
 
 
+function ocsp_create {
+
+    $extensions = "[ ocsp_opts ]`r`nsubject`t`t=`"cn=miniCA OCSP responder`"`r`n" ` + "nsCaRevocationUrl`t=`"" + "url" + "`"`r`n" + "`r`nextKeyUsageSyntax`t=id-kp-OCSPSigning"
+                       
+    [System.IO.File]::WriteAllLines($Path + "\tmp.cnf", $extensions)
+
+    
+    $Path = $ca_root_dir.Replace("/", "\")
+
+    openssl req -new -nodes -out $Path"\csr\ocsp.csr" -keyout $Path"\private\ocsp.key"
+    openssl ca -keyfile $Path"\private\caprivatekey.pem" -cert Path"\cert\cacert.pem" -in $Path"\csr\ocsp.csr" -out $Path"\cert\ocsp.pem" -config $Path"\tmp.cnf"
+    Remove-Item -Path $Path"\tmp.cnf"
+}
+
 function create-ca {
   New-Item -ItemType "directory" -Path $directories -Force
   New-Item -ItemType "file" -Path $files -Force
