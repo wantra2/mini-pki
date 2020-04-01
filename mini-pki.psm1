@@ -59,7 +59,10 @@ function user_req {
 
 
 	openssl req -new -newkey rsa:2048 -sha256 `
-    -keyout $Path"private\"$Key -out $Path"csr\"$Csr -subj $subject
+    -keyout $Path"\private\"$Key -out $Path"\csr\"$Csr -subj $subject -noout
+
+    openssl rsa -in $Path"\private\"$Key -pubout -out $Path"\public\"$Key
+
 }
 
 function get_issuer_infos {
@@ -174,4 +177,4 @@ function mini-pki {
   Write-Output "Doing action $action"
   $functions[$action].Invoke($param1, $param2, $param3)
 }
-Export-ModuleMember -Function mini-p
+Export-ModuleMember -Function mini-pki
