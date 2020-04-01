@@ -39,7 +39,7 @@ function user_req {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Key,
 		[Parameter(mandatory=$true)]	[String]$Csr,
-		[Parameter(mandatory=$false)] 	[String]$Path = "miniCA/"
+		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
 	)
 
     Write-Host "You are about to be asked to enter information that will be incorporated into your certificate request.`n" `
@@ -85,7 +85,7 @@ function user_sign {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Csr,
 		[Parameter(mandatory=$true)]	[String]$Pem,
-		[Parameter(mandatory=$false)] 	[String]$Path = ".\miniCA\"
+		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
 	)
 
     $acIssuerInfos = get_issuer_infos $Path"cert\cacert.pem"
@@ -174,4 +174,4 @@ function mini-pki {
   Write-Output "Doing action $action"
   $functions[$action].Invoke($param1, $param2, $param3)
 }
-Export-ModuleMember -Function mini-pki
+Export-ModuleMember -Function mini-p
