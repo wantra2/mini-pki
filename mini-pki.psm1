@@ -43,7 +43,7 @@ function user_req {
 	)
 	
 	openssl req -new -newkey rsa:2048 -sha256 `
-    -keyout $Path"private\"$Key -out $Path"csr\"$Csr -config $Path"test.cnf"
+    -keyout $Path"private\"$Key -out $Path"csr\"$Csr
 }
 
 function get_issuer_infos {
