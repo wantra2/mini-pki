@@ -39,7 +39,7 @@ function user_req {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Key,
 		[Parameter(mandatory=$true)]	[String]$Csr,
-		[Parameter(mandatory=$false)] 	[String]$Path = "miniCA/"
+		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
 	)
 	
 	openssl req -new -newkey rsa:2048 -sha256 `
@@ -69,7 +69,7 @@ function user_sign {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Csr,
 		[Parameter(mandatory=$true)]	[String]$Pem,
-		[Parameter(mandatory=$false)] 	[String]$Path = ".\miniCA\"
+		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
 	)
 
     $acIssuerInfos = get_issuer_infos $Path"cert\cacert.pem"
