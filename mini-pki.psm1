@@ -41,7 +41,7 @@ function user_req {
     $csr_path = $path + "\csr\" + $Csr
     $public_key_path = $Path + "\public\" + $Key
 
-    openssl req -new -newkey rsa:2048 -nodes -sha256 -keyout $private_key_path -out $csr_path
+	openssl req -new -newkey rsa:2048 -nodes -sha256 -keyout $private_key_path -out $csr_path
 
     openssl rsa -in $private_key_path -pubout -out $public_key_path
 
@@ -130,24 +130,29 @@ function user_sign {
 
 function ocsp_create {
 
-    $extensions = "[ ocsp_opts ]`r`nsubject`t`t=`"cn=miniCA OCSP responder`"`r`n" ` + "nsCaRevocationUrl`t=`"" + "url" + "`"`r`n" + "`r`nextKeyUsageSyntax`t=id-kp-OCSPSigning"
-                       
-    [System.IO.File]::WriteAllLines($Path + "\tmp.cnf", $extensions)
-
-    
     $Path = $ca_root_dir.Replace("/", "\")
 
-    openssl req -new -nodes -out $Path"\csr\ocsp.csr" -keyout $Path"\private\ocsp.key"
-    openssl ca -keyfile $Path"\private\caprivatekey.pem" -cert Path"\cert\cacert.pem" -in $Path"\csr\ocsp.csr" -out $Path"\cert\ocsp.pem" -config $Path"\tmp.cnf"
+    $extensions = "[ v3_OCSP ]`r`nnsCaRevocationUrl`t=`"intranet/crl.pem`"`r`n"
+    Write-Host $extensions
+    
+    [System.IO.File]::WriteAllLines($Path + "\tmp.cnf", $extensions)  
+
+    $subject = @("C=FR", "ST=FRANCE", "L=PARIS", "O=EPITAF", "emailAddress=root@epitaf.com", "OU=IT", "CN=epitaf.fr")
+    $subject_string = "/" + ($subject -join "/")
+
+
+    openssl req -new -nodes -out $Path"\csr\ocsp.csr" -keyout $Path"\private\ocsp.key" -subj $subject_string
+    openssl ca -keyfile $Path"\private\caprivatekey.pem" -cert $Path"\cert\cacert.pem" -in $Path"\csr\ocsp.csr" -out $Path"\cert\ocsp.pem" -extfile $Path"\tmp.cnf" -extensions "v3_OCSP"
     Remove-Item -Path $Path"\tmp.cnf"
 }
 
 function create-ca {
   New-Item -ItemType "directory" -Path $directories -Force
   New-Item -ItemType "file" -Path $files -Force
-  Add-Content -Path $serial -Value "01"                                                                                                               
+  Add-Content -Path $serial -Value "01"
   
-  $subject = @("C=FR", "O=EPITA", "OU=SRS", "E=srs@epita.com", "CN=root")
+  #$subject = @("C=FR", "O=EPITA", "OU=SRS", "emailAddress=srs@epita.com", "CN=root")
+  $subject = @("C=FR", "ST=FRANCE", "L=PARIS", "O=EPITAF", "emailAddress=root@epitaf.com")
   $subject_string = "/" + ($subject -join "/")
 
   openssl req -new -outform "PEM" -sha256 -newkey rsa:2048 -subj $subject_string -keyout "$ca_private_dir/caprivatekey.pem" -out "$ca_cert_dir/cacert.pem" -extensions "v3_ca" -days 3000 -x509 -nodes  
@@ -184,6 +189,10 @@ function mini-pki {
   }
   elseif ($action -eq "user-sign"){
     user_sign $param1 $param2
+    return
+  }
+  elseif ($action -eq "genocsp"){
+    ocsp_create
     return
   }
 
