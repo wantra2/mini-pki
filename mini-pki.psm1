@@ -33,35 +33,22 @@ $files = @($index, $serial)
 <# params:
 	csr: The csr file name
 	key: The keys files name
-    Path: Optionnal, the path for the miniCA directory
 #>
 function user_req {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Key,
-		[Parameter(mandatory=$true)]	[String]$Csr,
-		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
+		[Parameter(mandatory=$true)]	[String]$Csr
 	)
+    
+    $Path = $ca_root_dir.Replace('/', '\')
 
-    Write-Host "You are about to be asked to enter information that will be incorporated into your certificate request.`n" `
-     "What you are about to enter is what is called a Distinguished Name or a DN.`n " `
-     "There are quite a few fields but you can leave some blank For some fields there will be a default value, `n" `
-     "If you enter '.', the field will be left blank.`n------"
-	
-    $C = Read-Host -Prompt "Country Name (2 letter code) [AU]"
-    $ST = Read-Host -Prompt "State or Province Name (full name) [Some-State]"
-    $L = Read-Host -Prompt "Locality Name (eg, city) []"
-    $O = Read-Host -Prompt "Organization Name (eg, company) [Internet Widgits Pty Ltd]"
-    $OU = Read-Host -Prompt "Organizational Unit Name (eg, section) []"
-    $CN = Read-Host -Prompt "Common Name (e.g. server FQDN or YOUR name) []"
-    $emailAddress = Read-Host -Prompt "Email Address []"
+    $private_key_path = $Path + "\private\" + $Key
+    $csr_path = $path + "\csr\" + $Csr
+    $public_key_path = $Path + "\public\" + $Key
 
-    $subject = "/C="+$C + "/ST="+$ST + "/L="+$L + "/O="+$O + "/OU="+$OU + "/CN="+$CN + "/emailAddress="+$emailAddress + "/"
+	openssl req -new -newkey rsa:2048 -sha256 -keyout $private_key_path -out $csr_path
 
-
-	openssl req -new -newkey rsa:2048 -sha256 `
-    -keyout $Path"\private\"$Key -out $Path"\csr\"$Csr -subj $subject -noout
-
-    openssl rsa -in $Path"\private\"$Key -pubout -out $Path"\public\"$Key
+    openssl rsa -in $private_key_path -pubout -out $public_key_path
 
 }
 
@@ -87,11 +74,12 @@ function get_subject_infos {
 function user_sign {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Csr,
-		[Parameter(mandatory=$true)]	[String]$Pem,
-		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
+		[Parameter(mandatory=$true)]	[String]$Pem
 	)
 
-    $acIssuerInfos = get_issuer_infos $Path"cert\cacert.pem"
+    $Path = $ca_root_dir.Replace("/", "\")
+
+    $acIssuerInfos = get_issuer_infos $Path"\cert\cacert.pem"
 
 	$acCertInfos = [ordered]@{}
     $acIssuerInfos | ForEach-Object {
@@ -99,7 +87,8 @@ function user_sign {
         $acCertInfos[$split_info[0]] = $split_info[1]
     }
 
-    $csrSubjectInfos = get_subject_infos $Path"csr\"$Csr
+
+    $csrSubjectInfos = get_subject_infos $Path"\csr\"$Csr
 
 	$csrCertInfos = [ordered]@{}
     $csrSubjectInfos | ForEach-Object {
@@ -107,12 +96,13 @@ function user_sign {
         $csrCertInfos[$split_info[0]] = $split_info[1]
     }
 
-    $tmp = openssl x509 -in $Path"cert\cacert.pem" -checkend 2592000 # 30 jours
+    $tmp = openssl x509 -in $Path"\cert\cacert.pem" -checkend 2592000 # 30 jours
     if ($LASTEXITCODE -eq 1){                          #font 2 592 000 secondes
         Write-Host "Failure: The AC certificate will expire in less than 30 days"`
          -ForegroundColor Red
         return
     }
+
     if ($csrCertInfos.C -ne $acCertInfos.C `
     -Or $csrCertInfos.O -ne $acCertInfos.O `
     -Or $csrCertInfos.OU -eq $null `
@@ -126,20 +116,20 @@ function user_sign {
     $extensions = "[ user_cert_new ]`r`nnsComment`t`t= `"" + $csrCertInfos.CN + "`"`r`n" `
     + "nsCertType=`"client,email`"`r`n"
                        
-    [System.IO.File]::WriteAllLines($Path + "tmp.cnf", $extensions)
+    [System.IO.File]::WriteAllLines($Path + "\tmp.cnf", $extensions)
 
-    if (Test-Path $Path"cert\cacert.srl"){
-        openssl x509 -req  -days 365 -in $Path"csr\"$Csr -out $Path"cert\"$Pem `
-        -CA $Path"cert\cacert.pem" -CAkey $Path"private\caprivate.key" `
-        -extfile $Path"tmp.cnf" -extensions "user_cert_new"
+    if (Test-Path $Path"\cert\cacert.srl"){
+        openssl x509 -req  -days 365 -in $Path"\csr\"$Csr -out $Path"\cert\"$Pem `
+        -CA $Path"\cert\cacert.pem" -CAkey $Path"\private\caprivatekey.pem" `
+        -extfile $Path"\tmp.cnf" -extensions "user_cert_new"
     }
     Else{
-        openssl x509 -req  -days 365 -in $Path"csr\"$Csr -out $Path"cert\"$Pem `
-        -CA $Path"cert\cacert.pem" -CAkey $Path"private\caprivate.key" `
-        -CAcreateserial -CAserial $Path"cert\cacert.srl" `
-        -extfile $Path"tmp.cnf" -extensions "user_cert_new"
+        openssl x509 -req  -days 365 -in $Path"\csr\"$Csr -out $Path"\cert\"$Pem `
+        -CA $Path"\cert\cacert.pem" -CAkey $Path"\private\caprivatekey.pem" `
+        -CAcreateserial -CAserial $Path"\cert\cacert.srl" `
+        -extfile $Path"\tmp.cnf" -extensions "user_cert_new"
     }
-    Remove-Item -Path $Path + "tmp.cnf"
+    Remove-Item -Path $Path"\tmp.cnf"
 }
 
 
@@ -167,14 +157,21 @@ function gencrl {
 $functions = @{
   "create-ca" = (Get-Item "function:create-ca").ScriptBlock
   "gencrl" = (Get-Item "function:gencrl").ScriptBlock
-  "user-req" = (Get-Item "function:user_req").ScriptBlock
-  "user-sign" = (Get-Item "function:user_sign").ScriptBlock
   }
 
 function mini-pki {
-  param($action, $param1, $param2, $param3)
+  param($action, $param1, $param2)
 
   Write-Output "Doing action $action"
+  if ($action -eq "user-req"){
+    user_req $param1 $param2
+    return
+  }
+  elseif ($action -eq "user-sign"){
+    user_sign $param1 $param2
+    return
+  }
   $functions[$action].Invoke($param1, $param2, $param3)
 }
+
 Export-ModuleMember -Function mini-pki
