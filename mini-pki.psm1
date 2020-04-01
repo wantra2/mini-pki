@@ -3,7 +3,7 @@
   This module provides tools to make a PKI
 
  .Description
-  The function mini-pki can take different arguments in order to build a PKI
+  The function mini-pki can take different arguments in order to manage a PKI
 
  .Parameter action
   Define which action is to be made.
@@ -51,15 +51,22 @@ function gencrl {
   openssl ca -gencrl -keyfile "$ca_private_dir/caprivatekey.pem" -cert "$ca_cert_dir/cacert.pem" -out "$ca_root_dir/crl.pem"  
 }
 
+function revoke {
+  param($cert, $index)
+
+  openssl ca -revoke "/$cert"
+}
+
 $functions = @{
   "create-ca" = (Get-Item "function:create-ca").ScriptBlock
   "gencrl" = (Get-Item "function:gencrl").ScriptBlock
+  "revoke" = (Get-Item "function:revoke").ScriptBlock
 }
 
 function mini-pki {
-  param($action)
+  param($action, $param1, $param2)
 
   Write-Output "Doing action $action"
-  $functions[$action].Invoke()
+  $functions[$action].Invoke($param1, $param2)
 }
 Export-ModuleMember -Function mini-pki
