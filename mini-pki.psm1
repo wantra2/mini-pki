@@ -39,11 +39,27 @@ function user_req {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Key,
 		[Parameter(mandatory=$true)]	[String]$Csr,
-		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
+		[Parameter(mandatory=$false)] 	[String]$Path = "miniCA/"
 	)
+
+    Write-Host "You are about to be asked to enter information that will be incorporated into your certificate request.`n" `
+     "What you are about to enter is what is called a Distinguished Name or a DN.`n " `
+     "There are quite a few fields but you can leave some blank For some fields there will be a default value, `n" `
+     "If you enter '.', the field will be left blank.`n------"
 	
+    $C = Read-Host -Prompt "Country Name (2 letter code) [AU]"
+    $ST = Read-Host -Prompt "State or Province Name (full name) [Some-State]"
+    $L = Read-Host -Prompt "Locality Name (eg, city) []"
+    $O = Read-Host -Prompt "Organization Name (eg, company) [Internet Widgits Pty Ltd]"
+    $OU = Read-Host -Prompt "Organizational Unit Name (eg, section) []"
+    $CN = Read-Host -Prompt "Common Name (e.g. server FQDN or YOUR name) []"
+    $emailAddress = Read-Host -Prompt "Email Address []"
+
+    $subject = "/C="+$C + "/ST="+$ST + "/L="+$L + "/O="+$O + "/OU="+$OU + "/CN="+$CN + "/emailAddress="+$emailAddress + "/"
+
+
 	openssl req -new -newkey rsa:2048 -sha256 `
-    -keyout $Path"private\"$Key -out $Path"csr\"$Csr
+    -keyout $Path"private\"$Key -out $Path"csr\"$Csr -config $Path"test.cnf" -subj $subject
 }
 
 function get_issuer_infos {
@@ -69,7 +85,7 @@ function user_sign {
 	Param (
 		[Parameter(mandatory=$true)]	[String]$Csr,
 		[Parameter(mandatory=$true)]	[String]$Pem,
-		[Parameter(mandatory=$false)] 	[String]$Path = $ca_root_dir
+		[Parameter(mandatory=$false)] 	[String]$Path = ".\miniCA\"
 	)
 
     $acIssuerInfos = get_issuer_infos $Path"cert\cacert.pem"
